@@ -35,19 +35,24 @@ namespace TwitchBot
             Client = new TwitchClient(customClient);
             Client.Initialize(Credentials, "ba_ba_yka");
 
+            Client.OnConnected += (sender, e) => Client_OnConnected(sender, e, channels);
             Client.OnMessageReceived += Client_OnMessageReceived;
             Client.OnJoinedChannel += Client_OnJoinedChannel;
 
             Client.Connect();
-            foreach (var channel in channels)
-            {
-                Client.JoinChannel(channel);
-            }
         }
 
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
             Client.SendMessage(e.Channel, "Hello everybody! annkraHello");
+        }
+
+        private void Client_OnConnected(object sender, OnConnectedArgs e, List<string> channels)
+        {
+            foreach (var channel in channels)
+            {
+                Client.JoinChannel(channel);
+            }
         }
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
