@@ -110,7 +110,7 @@ namespace TwitchBot
             string message = e.ChatMessage.Message;
 
             //!dance
-            if (message == "!dance")
+            if (message.StartsWith("!dance"))
             {
                 List<string> danceSmiles = new List<string> { "annkraDisco", "karterDaance", "mcaT", "karterHype" };
                 StringBuilder builder = new StringBuilder();
@@ -122,7 +122,9 @@ namespace TwitchBot
                 //var client = (sender as TwitchClient);
                 //CheckClientChannel(client, e.ChatMessage.Channel);
                 //if (client.JoinedChannels.Any(_ => _.Channel == e.ChatMessage.Channel))
-                //string s = "annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype ";
+                //string s = "annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT 
+                //karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT 
+                //karterHype annkraDisco karterDaance mcaT karterHype ";
                     Client.SendMessage(e.ChatMessage.Channel, builder.ToString());
             }
         }
@@ -131,8 +133,9 @@ namespace TwitchBot
         {
             //foreach (var client in Clients)
             //{
-                Client.Disconnect();
+            //    сlient.Disconnect();
             //}
+            Client.Disconnect();
             IsModerOrVIP = false;
         }
     }

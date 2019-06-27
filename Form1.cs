@@ -16,7 +16,7 @@ namespace TwitchBot
             StopBtn.Enabled = false;
         }
 
-        /*private void StartBtn_Click(object sender, EventArgs e)
+        private void StartBtn_Click(object sender, EventArgs e)
         {
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(Application.StartupPath + @"\..\..\TwitchInfo.xml");
@@ -33,40 +33,21 @@ namespace TwitchBot
                         botName = xnode.Attributes.GetNamedItem("name")?.Value;
                         botToken = xnode.Attributes.GetNamedItem("token")?.Value;
                         break;
-                    case "Channels":
-                        foreach (XmlNode childnode in xnode.ChildNodes)
-                        {
-                            Channels.Add(childnode.InnerText);
-                        }
-                        break;
+                    //case "Channels":
+                    //    foreach (XmlNode childnode in xnode.ChildNodes)
+                    //    {
+                    //        Channels.Add(childnode.InnerText);
+                    //    }
+                    //    break;
                     default:
                         break;
                 }
             }
 
-            this.Enabled = false;
-            Bot.Connect(botName, botToken, Channels);
-            this.Enabled = true;
-        }*/
+            //this.Enabled = false;
+            //Bot.Connect(botName, botToken, Channels);
+            //this.Enabled = true;
 
-        private void StartBtn_Click(object sender, EventArgs e)
-        {
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(Application.StartupPath + @"\..\..\TwitchInfo.xml");
-            XmlElement xRoot = xDoc.DocumentElement;
-
-            string botName = null, botToken = null;
-
-            Channels = new List<string>();
-            foreach (XmlNode xnode in xRoot)
-            {
-                if (xnode.Name == "Bot")
-                {
-                    botName = xnode.Attributes.GetNamedItem("name")?.Value;
-                    botToken = xnode.Attributes.GetNamedItem("token")?.Value;
-                    break;
-                }
-            }
             var channel = ChannelTxtBox.Text;
             StartBtn.Enabled = false;
             Bot.Connect(botName, botToken, channel);
