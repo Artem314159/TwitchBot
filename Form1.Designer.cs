@@ -30,13 +30,14 @@
         {
             this.StartBtn = new System.Windows.Forms.Button();
             this.StopBtn = new System.Windows.Forms.Button();
+            this.ChannelTxtBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // StartBtn
             // 
             this.StartBtn.Location = new System.Drawing.Point(29, 45);
             this.StartBtn.Name = "StartBtn";
-            this.StartBtn.Size = new System.Drawing.Size(75, 23);
+            this.StartBtn.Size = new System.Drawing.Size(100, 23);
             this.StartBtn.TabIndex = 0;
             this.StartBtn.Text = "Start";
             this.StartBtn.UseVisualStyleBackColor = true;
@@ -52,16 +53,26 @@
             this.StopBtn.UseVisualStyleBackColor = true;
             this.StopBtn.Click += new System.EventHandler(this.StopBtn_Click);
             // 
+            // ChannelTxtBox
+            // 
+            this.ChannelTxtBox.Location = new System.Drawing.Point(29, 74);
+            this.ChannelTxtBox.Name = "ChannelTxtBox";
+            this.ChannelTxtBox.Size = new System.Drawing.Size(100, 20);
+            this.ChannelTxtBox.TabIndex = 2;
+            this.ChannelTxtBox.Text = "Spac3crafter";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(272, 161);
+            this.Controls.Add(this.ChannelTxtBox);
             this.Controls.Add(this.StopBtn);
             this.Controls.Add(this.StartBtn);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -69,6 +80,7 @@
 
         private System.Windows.Forms.Button StartBtn;
         private System.Windows.Forms.Button StopBtn;
+        private System.Windows.Forms.TextBox ChannelTxtBox;
     }
 }
 

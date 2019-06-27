@@ -13,9 +13,10 @@ namespace TwitchBot
         public Form1()
         {
             InitializeComponent();
+            StopBtn.Enabled = false;
         }
 
-        private void StartBtn_Click(object sender, EventArgs e)
+        /*private void StartBtn_Click(object sender, EventArgs e)
         {
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(Application.StartupPath + @"\..\..\TwitchInfo.xml");
@@ -46,11 +47,37 @@ namespace TwitchBot
             this.Enabled = false;
             Bot.Connect(botName, botToken, Channels);
             this.Enabled = true;
+        }*/
+
+        private void StartBtn_Click(object sender, EventArgs e)
+        {
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.Load(Application.StartupPath + @"\..\..\TwitchInfo.xml");
+            XmlElement xRoot = xDoc.DocumentElement;
+
+            string botName = null, botToken = null;
+
+            Channels = new List<string>();
+            foreach (XmlNode xnode in xRoot)
+            {
+                if (xnode.Name == "Bot")
+                {
+                    botName = xnode.Attributes.GetNamedItem("name")?.Value;
+                    botToken = xnode.Attributes.GetNamedItem("token")?.Value;
+                    break;
+                }
+            }
+            var channel = ChannelTxtBox.Text;
+            StartBtn.Enabled = false;
+            Bot.Connect(botName, botToken, channel);
+            StopBtn.Enabled = true;
         }
 
         private void StopBtn_Click(object sender, EventArgs e)
         {
+            StopBtn.Enabled = false;
             Bot.Disconnect();
+            StartBtn.Enabled = true;
         }
     }
 }
