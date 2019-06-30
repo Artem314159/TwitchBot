@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 using System.Xml;
 
@@ -7,6 +8,7 @@ namespace TwitchBot
 {
     public partial class Form1 : Form
     {
+        delegate void SafeCallDelegate(object sender, TwitchLib.Client.Events.OnLogArgs e);
         ChatBot Bot { get; set; } = new ChatBot();
         List<string> Channels { get; set; }// = new List<string>();
 
@@ -16,40 +18,74 @@ namespace TwitchBot
             StopBtn.Enabled = false;
         }
 
-        /*private void StartBtn_Click(object sender, EventArgs e)
+        private void StartBtn_Click(object sender, EventArgs e)
         {
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(Application.StartupPath + @"\..\..\TwitchInfo.xml");
-            XmlElement xRoot = xDoc.DocumentElement;
-
             string botName = null, botToken = null;
-
             Channels = new List<string>();
-            foreach (XmlNode xnode in xRoot)
+
+            XmlReaderSettings readerSettings = new XmlReaderSettings
+                { IgnoreComments = true };
+            using (XmlReader reader = XmlReader.Create(Application.StartupPath +
+                @"\..\..\TwitchInfo.xml", readerSettings))
             {
-                switch (xnode.Name)
+                XmlDocument xDoc = new XmlDocument();
+                xDoc.Load(reader);
+                XmlElement xRoot = xDoc.DocumentElement;
+
+                foreach (XmlNode xnode in xRoot)
                 {
-                    case "Bot":
-                        botName = xnode.Attributes.GetNamedItem("name")?.Value;
-                        botToken = xnode.Attributes.GetNamedItem("token")?.Value;
-                        break;
-                    case "Channels":
-                        foreach (XmlNode childnode in xnode.ChildNodes)
-                        {
-                            Channels.Add(childnode.InnerText);
-                        }
-                        break;
-                    default:
-                        break;
+                    switch (xnode.Name)
+                    {
+                        case "Bot":
+                            botName = xnode.Attributes.GetNamedItem("name")?.Value;
+                            botToken = xnode.Attributes.GetNamedItem("token")?.Value;
+                            break;
+                        case "Channels":
+                            foreach (XmlNode childnode in xnode.ChildNodes)
+                            {
+                                Channels.Add(childnode.InnerText);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
+            Bot.OnLog += Bot_OnLog;
 
-            this.Enabled = false;
+            Waiting(false);
             Bot.Connect(botName, botToken, Channels);
-            this.Enabled = true;
-        }*/
+            Waiting(true);
+            StartBtn.Enabled = false;
+            StopBtn.Enabled = true;
+        }
 
-        private void StartBtn_Click(object sender, EventArgs e)
+        private void Bot_OnLog(object sender, TwitchLib.Client.Events.OnLogArgs e)
+        {
+            if (LogBox.InvokeRequired)
+            {
+                var d = new SafeCallDelegate(Bot_OnLog);
+                Invoke(d, new object[] { sender, e });
+            }
+            else
+            {
+                LogBox.Text += $"{e.DateTime}: {e.Data}\n";
+            }
+            //Worker.RunWorkerAsync($"{e.DateTime}: {e.Data}");
+        }
+
+        private void Waiting(bool isFinished)
+        {
+            ConnectGrBox.Enabled = isFinished;
+            EditChnlGrBox.Enabled = isFinished;
+        }
+
+        private void RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            LogBox.Text += e.Result;
+        }
+
+        /*private void StartBtn_Click(object sender, EventArgs e)
         {
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(Application.StartupPath + @"\..\..\TwitchInfo.xml");
@@ -71,13 +107,15 @@ namespace TwitchBot
             StartBtn.Enabled = false;
             Bot.Connect(botName, botToken, channel);
             StopBtn.Enabled = true;
-        }
+        }*/
 
         private void StopBtn_Click(object sender, EventArgs e)
         {
-            StopBtn.Enabled = false;
+            Waiting(false);
             Bot.Disconnect();
+            Waiting(true);
             StartBtn.Enabled = true;
+            StopBtn.Enabled = false;
         }
     }
 }

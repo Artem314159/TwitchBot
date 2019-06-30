@@ -2,50 +2,81 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using TwitchLib.Api;
-using TwitchLib.Api.V5.Models.Subscriptions;
 using TwitchLib.Client;
+using TwitchLib.Client.Enums;
 using TwitchLib.Client.Events;
-using TwitchLib.Client.Extensions;
 using TwitchLib.Client.Models;
-using TwitchLib.Communication.Clients;
-using TwitchLib.Communication.Models;
+using TwitchLib.Communication.Events;
 
 namespace TwitchBot
 {
     internal class ChatBot
     {
         private ConnectionCredentials Credentials { get; set; }
-        //private List<TwitchClient> Clients { get; set; } = new List<TwitchClient>();
-        private TwitchClient Client { get; set; }
-        public bool IsModerOrVIP { get; set; }
+        private List<CustomClientModel> Clients { get; set; } = new List<CustomClientModel>();
 
-        /*internal void Connect(string botName, string botToken, List<string> channels)
+        public event EventHandler<OnLogArgs> OnLog;
+
+        internal void Connect(string botName, string botToken, List<string> channels)
         {
-            Credentials = new ConnectionCredentials(botName, botToken);
-
-            var clientOptions = new ClientOptions
-            {
-                MessagesAllowedInPeriod = 100,
-                ThrottlingPeriod = TimeSpan.FromSeconds(60)
-            };
-            var customClient = new WebSocketClient(clientOptions);
+            //var api = new TwitchAPI();
+            //api.Settings.ClientId = GetUserId(botName).Result;
+            //api.Settings.AccessToken = botToken;
 
             foreach (var channel in channels)
             {
+                Credentials = new ConnectionCredentials(botName, botToken);
                 var client = new TwitchClient();
                 client.Initialize(Credentials, channel);
 
-                client.OnConnected += Client_OnConnected;
-                client.OnMessageReceived += Client_OnMessageReceived;
-                client.OnJoinedChannel += Client_OnJoinedChannel;
+                var model = new CustomClientModel(client);
+                Clients.Add(model);
+
+                //is posible because model contain property "client"
+                client.OnConnected += (s, ev) => Client_OnConnected(model, ev);
+                client.OnMessageReceived += (s, ev) => Client_OnMessageReceived(model, ev);
+                client.OnJoinedChannel += (s, ev) => Client_OnJoinedChannel(model, ev);
+                client.OnUserStateChanged += (s, ev) => Client_OnUserStateChanged(model, ev);
+                client.OnMessageThrottled += (s, ev) => Client_OnMessageThrottled(model, ev);
+                client.OnLog += Client_OnLog;
 
                 client.Connect();
-                Clients.Add(client);
+                //var channelFollowers = api.V5.Channels.GetChannelFollowersAsync(channel).Result;
             }
-        }*/
+        }
 
-        internal void Connect(string botName, string botToken, string channel)
+        public static async Task<string> GetUserId(string name)
+        {
+            var api = new TwitchAPI();
+            var userList = await api.V5.Users.GetUserByNameAsync(name);
+            if (userList == null || userList.Total == 0)
+                return string.Empty;
+            else
+                return userList.Matches[0].Id.Trim();
+        }
+
+        private void Client_OnMessageThrottled(object sender, OnMessageThrottledEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Client_OnLog(object sender, OnLogArgs e)
+        {
+            this.OnLog?.Invoke(sender, e);
+        }
+
+        private void Client_OnUserStateChanged(object sender, OnUserStateChangedArgs e)
+        {
+            var clientModel = Clients.First(_ => 
+                _.ChannelName == (sender as CustomClientModel).ChannelName);
+            clientModel.UserType = e.UserState.UserType;
+            clientModel.IsSub = e.UserState.IsSubscriber;
+            clientModel.HasVIP = e.UserState.Badges.Any(_ => _.Key == "vip");
+        }
+
+        /*internal void Connect(string botName, string botToken, string channel)
         {
             Credentials = new ConnectionCredentials(botName, botToken);
 
@@ -69,71 +100,55 @@ namespace TwitchBot
                 }
                 catch (Exception e) { }
             }
-        }
-
-        private void Client_OnModeratorsReceived(object sender, OnModeratorsReceivedArgs e)
-        {
-            IsModerOrVIP = IsModerOrVIP || e.Moderators.Contains(Client.ConnectionCredentials.TwitchUsername);
-        }
-
-        private void Client_OnVIPsReceived(object sender, OnVIPsReceivedArgs e)
-        {
-            IsModerOrVIP = IsModerOrVIP || e.VIPs.Contains(Client.ConnectionCredentials.TwitchUsername);
-        }
-
-        private void CheckClientChannel(TwitchClient client, string channel)
-        {
-            if (!client.JoinedChannels.Any(_ => _.Channel == channel))
-                client.JoinChannel(channel);
-        }
+        }*/
 
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            //var client = (sender as TwitchClient);
-            //CheckClientChannel(client, e.Channel);
-            //if (client.JoinedChannels.Any(_ => _.Channel == e.Channel))
-                //Client.SendMessage(e.Channel, "Bot joined MrDestructoid");
+            var model = Clients.First(_ =>
+                _.ChannelName == (sender as CustomClientModel).ChannelName);
+            if (model.Client.JoinedChannels.Any(_ => _.Channel == e.Channel))
+                model.Client.SendMessage(e.Channel, "Bot joined.");
         }
 
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
-            //var client = (sender as TwitchClient);
-            //CheckClientChannel(client, e.AutoJoinChannel);
-            //if (client.JoinedChannels.Any(_ => _.Channel == e.AutoJoinChannel))
-                //Client.SendMessage(e.AutoJoinChannel, "Bot connected MrDestructoid");
+            var model = Clients.First(_ =>
+                _.ChannelName == (sender as CustomClientModel).ChannelName);
+            model.ChannelName = model.Client.JoinedChannels[0].Channel;
+            if (model.Client.JoinedChannels.Any(_ => _.Channel == e.AutoJoinChannel))
+                model.Client.SendMessage(e.AutoJoinChannel, "Bot connected.");
         }
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            if(!IsModerOrVIP)
+            var model = Clients.First(_ =>
+                _.ChannelName == (sender as CustomClientModel).ChannelName);
+            if (model.UserType == UserType.Viewer && !model.HasVIP)
                 System.Threading.Thread.Sleep(1000);
             string message = e.ChatMessage.Message;
 
             //!dance
-            if (message == "!dance")
+            if (message.StartsWith("!dance"))
             {
-                List<string> danceSmiles = new List<string> { "annkraDisco", "karterDaance", "mcaT", "karterHype" };
+                List<string> danceSmiles = new List<string>
+                    { "annkraDisco", "karterDaance", "mcaT", "karterHype" };
                 StringBuilder builder = new StringBuilder();
                 int count = new Random().Next(20, 30);
                 for (int i = 0; i < count; i++)
                 {
                     builder.Append($"{danceSmiles[i % danceSmiles.Count]} ");
                 }
-                //var client = (sender as TwitchClient);
-                //CheckClientChannel(client, e.ChatMessage.Channel);
-                //if (client.JoinedChannels.Any(_ => _.Channel == e.ChatMessage.Channel))
-                //string s = "annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype annkraDisco karterDaance mcaT karterHype ";
-                    Client.SendMessage(e.ChatMessage.Channel, builder.ToString());
+                model.Client.SendMessage(e.ChatMessage.Channel, builder.ToString());
             }
         }
 
         internal void Disconnect()
         {
-            //foreach (var client in Clients)
-            //{
-                Client.Disconnect();
-            //}
-            IsModerOrVIP = false;
+            foreach (var client in Clients)
+            {
+                client.Client.Disconnect();
+            }
+            Clients.Clear();
         }
     }
 }
