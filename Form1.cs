@@ -93,16 +93,6 @@ namespace TwitchBot
 
             string botName = null, botToken = null;
 
-            Channels = new List<string>();
-            foreach (XmlNode xnode in xRoot)
-            {
-                if (xnode.Name == "Bot")
-                {
-                    botName = xnode.Attributes.GetNamedItem("name")?.Value;
-                    botToken = xnode.Attributes.GetNamedItem("token")?.Value;
-                    break;
-                }
-            }
             var channel = ChannelTxtBox.Text;
             StartBtn.Enabled = false;
             Bot.Connect(botName, botToken, channel);
