@@ -3,10 +3,10 @@
   <Bot name="Kilosaw" token="shify1mcfhs87ptn2r0i8eiwagaxlo"/>
   <!-->Bot name="Spac3_bot" token="oj3pg7655gf7nuj1te7h870wb820e1"/-->
   <Channels>
-    <item>ba_ba_yka</item>
-    <item>Spac3crafter</item>
-    <!--item>sx66627</item>
-    <item>Huss1aP1ay</item-->
-    <item>Kilosaw</item>
+    <item language="ru">ba_ba_yka</item>
+    <item language="ru">Spac3crafter</item>
+    <!--item language="ru">sx66627</item>
+    <item language="ru">Huss1aP1ay</item-->
+    <item language="ru">Kilosaw</item>
   </Channels>
 </Main>  

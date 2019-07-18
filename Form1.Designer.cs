@@ -35,9 +35,10 @@
             this.AddChnlBtn = new System.Windows.Forms.Button();
             this.ConnectGrBox = new System.Windows.Forms.GroupBox();
             this.EditChnlGrBox = new System.Windows.Forms.GroupBox();
+            this.RemovingComboBox = new System.Windows.Forms.ComboBox();
             this.RemoveChnlBtn = new System.Windows.Forms.Button();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.ChnlLanguageComboBox = new System.Windows.Forms.ComboBox();
             this.ConnectGrBox.SuspendLayout();
             this.EditChnlGrBox.SuspendLayout();
             this.SuspendLayout();
@@ -74,7 +75,7 @@
             // 
             this.LogBox.Location = new System.Drawing.Point(258, 33);
             this.LogBox.Name = "LogBox";
-            this.LogBox.Size = new System.Drawing.Size(370, 199);
+            this.LogBox.Size = new System.Drawing.Size(370, 214);
             this.LogBox.TabIndex = 3;
             this.LogBox.Text = "";
             // 
@@ -86,6 +87,7 @@
             this.AddChnlBtn.TabIndex = 4;
             this.AddChnlBtn.Text = "Add channel:";
             this.AddChnlBtn.UseVisualStyleBackColor = true;
+            this.AddChnlBtn.Click += new System.EventHandler(this.AddChnlBtn_Click);
             // 
             // ConnectGrBox
             // 
@@ -100,16 +102,25 @@
             // 
             // EditChnlGrBox
             // 
-            this.EditChnlGrBox.Controls.Add(this.comboBox1);
+            this.EditChnlGrBox.Controls.Add(this.ChnlLanguageComboBox);
+            this.EditChnlGrBox.Controls.Add(this.RemovingComboBox);
             this.EditChnlGrBox.Controls.Add(this.RemoveChnlBtn);
             this.EditChnlGrBox.Controls.Add(this.AddChnlBtn);
             this.EditChnlGrBox.Controls.Add(this.ChannelTxtBox);
             this.EditChnlGrBox.Location = new System.Drawing.Point(13, 103);
             this.EditChnlGrBox.Name = "EditChnlGrBox";
-            this.EditChnlGrBox.Size = new System.Drawing.Size(239, 129);
+            this.EditChnlGrBox.Size = new System.Drawing.Size(239, 144);
             this.EditChnlGrBox.TabIndex = 6;
             this.EditChnlGrBox.TabStop = false;
             this.EditChnlGrBox.Text = "Add/Remove";
+            // 
+            // RemovingComboBox
+            // 
+            this.RemovingComboBox.FormattingEnabled = true;
+            this.RemovingComboBox.Location = new System.Drawing.Point(125, 82);
+            this.RemovingComboBox.Name = "RemovingComboBox";
+            this.RemovingComboBox.Size = new System.Drawing.Size(108, 21);
+            this.RemovingComboBox.TabIndex = 7;
             // 
             // RemoveChnlBtn
             // 
@@ -119,14 +130,7 @@
             this.RemoveChnlBtn.TabIndex = 6;
             this.RemoveChnlBtn.Text = "Remove channel:";
             this.RemoveChnlBtn.UseVisualStyleBackColor = true;
-            // 
-            // comboBox1
-            // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(125, 82);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(108, 21);
-            this.comboBox1.TabIndex = 7;
+            this.RemoveChnlBtn.Click += new System.EventHandler(this.RemoveChnlBtn_Click);
             // 
             // label1
             // 
@@ -137,11 +141,19 @@
             this.label1.TabIndex = 7;
             this.label1.Text = "Log:";
             // 
+            // ChnlLanguageComboBox
+            // 
+            this.ChnlLanguageComboBox.FormattingEnabled = true;
+            this.ChnlLanguageComboBox.Location = new System.Drawing.Point(7, 109);
+            this.ChnlLanguageComboBox.Name = "ChnlLanguageComboBox";
+            this.ChnlLanguageComboBox.Size = new System.Drawing.Size(108, 21);
+            this.ChnlLanguageComboBox.TabIndex = 8;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(640, 244);
+            this.ClientSize = new System.Drawing.Size(640, 259);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.LogBox);
             this.Controls.Add(this.ConnectGrBox);
@@ -165,9 +177,10 @@
         private System.Windows.Forms.Button AddChnlBtn;
         private System.Windows.Forms.GroupBox ConnectGrBox;
         private System.Windows.Forms.GroupBox EditChnlGrBox;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.ComboBox RemovingComboBox;
         private System.Windows.Forms.Button RemoveChnlBtn;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ComboBox ChnlLanguageComboBox;
     }
 }
 

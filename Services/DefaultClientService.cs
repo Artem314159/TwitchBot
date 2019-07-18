@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TwitchBot.Models;
 using TwitchLib.Client;
 using TwitchLib.Client.Enums;
 using TwitchLib.Client.Events;
@@ -19,7 +20,9 @@ namespace TwitchBot
         public event EventHandler<OnLogArgs> OnLog;
         public readonly string BotName;
         public readonly string BotToken;
-        public readonly string ChannelName;
+        public string ChannelName { get; set; }
+
+        public List<CommandModel> Commands { get; set; } = new List<CommandModel>();
 
         public DefaultClientService(string botName, string botToken, string channelName)
         {
@@ -38,9 +41,21 @@ namespace TwitchBot
             client.OnJoinedChannel += (s, ev) => Client_OnJoinedChannel(Client, ev);
             client.OnUserStateChanged += (s, ev) => Client_OnUserStateChanged(Client, ev);
             client.OnMessageThrottled += (s, ev) => Client_OnMessageThrottled(Client, ev);
-            //client.OnLog += Client_OnLog;
+            client.OnDisconnected += (s, ev) => Client_OnDisconnected(Client, ev);
+
+            InitializeCommands();
 
             client.Connect();
+        }
+
+        private void Client_OnDisconnected(object sender, OnDisconnectedEventArgs e)
+        {
+            Client_OnLog(null, new OnLogArgs
+            {
+                BotUsername = BotName,
+                Data = $"Bot disconnected from {ChannelName}.",
+                DateTime = DateTime.Now
+            });
         }
 
         public virtual void Client_OnMessageThrottled(object sender, OnMessageThrottledEventArgs e)
@@ -56,14 +71,13 @@ namespace TwitchBot
         public virtual void Client_OnUserStateChanged(object sender, OnUserStateChangedArgs e)
         {
             Client.UserType = e.UserState.UserType;
+            if (e.UserState.Channel.ToLower() == BotName.ToLower()) Client.UserType = UserType.Broadcaster;
             Client.IsSub = e.UserState.IsSubscriber;
             Client.HasVIP = e.UserState.Badges.Any(_ => _.Key == "vip");
         }
 
         public virtual void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            //if (model.Client.JoinedChannels.Any(_ => _.Channel == e.Channel))
-            //    model.Client.SendMessage(e.Channel, "Bot joined.");
             Client_OnLog(sender, new OnLogArgs
             {
                 BotUsername = BotName,
@@ -78,61 +92,99 @@ namespace TwitchBot
             {
                 Client.Client.JoinChannel(ChannelName);
             }
-                Client.ChannelName = Client.Client.JoinedChannels[0].Channel;
-                //if (model.Client.JoinedChannels.Any(_ => _.Channel == e.AutoJoinChannel))
-                //    model.Client.SendMessage(e.AutoJoinChannel, "Bot connected.");
-                Client_OnLog(sender, new OnLogArgs
-                {
-                    BotUsername = BotName,
-                    Data = $"Bot connected to {ChannelName}.",
-                    DateTime = DateTime.Now
-                });
+
+            Client_OnLog(sender, new OnLogArgs
+            {
+                BotUsername = BotName,
+                Data = $"Bot connected to {ChannelName}.",
+                DateTime = DateTime.Now
+            });
         }
 
         public virtual void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            string message = e.ChatMessage.Message;
+            var chatMessage = e.ChatMessage;
             Client_OnLog(sender, new OnLogArgs
             {
                 BotUsername = BotName,
-                Data = $"{e.ChatMessage.Username} writed: \"{message}\".",
+                Data = $"({ChannelName}) {chatMessage.Username}: \"{chatMessage.Message}\".",
                 DateTime = DateTime.Now
             });
-            CreateAnswer(message, e.ChatMessage.Channel);
-            //if (Client.UserType == UserType.Viewer && !Client.HasVIP)
-            //    System.Threading.Thread.Sleep(1000);
+            if (Client.UserType == UserType.Viewer && !Client.HasVIP)
+                System.Threading.Thread.Sleep(1000);
+
+            var lowerMessage = chatMessage.Message.ToLower();
+            Commands.ForEach(_ => _.Command?.Invoke(chatMessage, lowerMessage, ChannelName));
         }
 
-        public virtual void CreateAnswer(string message, string channel)
+        public virtual void InitializeCommands()
         {
-            //!dance
-            if (message.StartsWith("!dance"))
+            List<string> dance = new List<string> { "!dance" };
+            Commands.Add(new CommandModel
             {
-                List<string> danceSmiles = new List<string>
-                    { "annkraDisco", "karterDaance", "mcaT", "karterHype" };
-                StringBuilder builder = new StringBuilder();
-                int count = new Random().Next(20, 30);
-                for (int i = 0; i < count; i++)
+                Names =  dance,
+                Description = "Dance, bot, dance. More than ever did not dance.",
+                Command = (chatMessage, lowerMessage, channel) =>
                 {
-                    builder.Append($"{danceSmiles[i % danceSmiles.Count]} ");
+                    StandartCheckingMessage(dance, lowerMessage, () =>
+                    {
+                        List<string> danceSmiles = new List<string>
+                            { "annkraDisco", "karterDaance", "mcaT", "karterHype" };
+                        StringBuilder builder = new StringBuilder();
+                        int count = new Random().Next(20, 30);
+                        for (int i = 0; i < count; i++)
+                        {
+                            builder.Append($"{danceSmiles[i % danceSmiles.Count]} ");
+                        }
+                        if (Client.Client.JoinedChannels.Count == 0)
+                            Client.Client.JoinChannel(ChannelName);
+                        Client.Client.SendMessage(channel, builder.ToString());
+                    });
                 }
-                if (Client.Client.JoinedChannels.Count == 0)
-                    Client.Client.JoinChannel(ChannelName);
-                Client.Client.SendMessage(channel, builder.ToString());
-            }
+            });
+
+            List<string> help = new List<string> { "!help" };
+            Commands.Add(new CommandModel
+            {
+                Names = help,
+                Description = "Returns all bot commands for this channel.",
+                Command = (chatMessage, lowerMessage, channel) =>
+                {
+                    StandartCheckingMessage(help, lowerMessage, () =>
+                    {
+                        StringBuilder builder = new StringBuilder("Available commands: PurpleStar ");
+                        foreach (var command in Commands)
+                        {
+                            int count = command.Names.Count;
+                            builder.Append(command.Names[0]);
+                            for (int i = 1; i < count; i++)
+                                builder.Append($", {command.Names[i]}");
+                            builder.Append($" - {command.Description} PurpleStar ");
+                        }
+                        if (Client.Client.JoinedChannels.Count == 0)
+                            Client.Client.JoinChannel(ChannelName);
+                        Client.Client.SendMessage(channel, builder.ToString());
+                    });
+                }
+            });
         }
+
+        protected void StandartCheckingMessage(List<string> names, string lowerMessage, Action f)
+        {
+            if (names.Contains(lowerMessage) || names.Any(_ => lowerMessage.StartsWith($"{_} ")))
+            {
+                f?.Invoke();
+            }
+        } 
 
         public virtual void Disconnect()
         {
-            if (Client.Client.JoinedChannels.Count == 0)
-                Client.Client.JoinChannel(ChannelName);
-            Client.Client.Disconnect();
-            Client_OnLog(null, new OnLogArgs
+            if (Client.Client.IsConnected)
             {
-                BotUsername = BotName,
-                Data = $"Bot disconnected from {ChannelName}.",
-                DateTime = DateTime.Now
-            });
+                if (Client.Client.JoinedChannels.Count == 0)
+                    Client.Client.JoinChannel(ChannelName);
+                Client.Client.Disconnect();
+            }
         }
     }
 }

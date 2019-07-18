@@ -10,7 +10,6 @@ namespace TwitchBot
             Client = client;
         }
 
-        public string ChannelName { get; set; }
         public ITwitchClient Client { get; set; }
         public bool IsSub { get; set; }
         public bool HasVIP { get; set; }
