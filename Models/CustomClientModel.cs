@@ -14,5 +14,6 @@ namespace TwitchBot
         public bool IsSub { get; set; }
         public bool HasVIP { get; set; }
         public UserType UserType { get; set; }
+        public bool Works { get; set; } = false;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Linq;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace TwitchBot
     public class DefaultClientService : IDefaultClientService
     {
         protected ConnectionCredentials Credentials;
-        protected CustomClientModel Client;
+        public CustomClientModel Client { get; }
 
         public event EventHandler<OnLogArgs> OnLog;
         public readonly string BotName;
@@ -24,7 +25,7 @@ namespace TwitchBot
 
         public List<CommandModel> Commands { get; set; } = new List<CommandModel>();
 
-        public DefaultClientService(string botName, string botToken, string channelName)
+        public DefaultClientService(Data.BotContext db, string botName, string botToken, string channelName)
         {
             BotName = botName;
             BotToken = botToken;
@@ -56,6 +57,8 @@ namespace TwitchBot
                 Data = $"Bot disconnected from {ChannelName}.",
                 DateTime = DateTime.Now
             });
+            if (Client.Works)
+                Client.Client.Connect();
         }
 
         public virtual void Client_OnMessageThrottled(object sender, OnMessageThrottledEventArgs e)
@@ -92,13 +95,14 @@ namespace TwitchBot
             {
                 Client.Client.JoinChannel(ChannelName);
             }
-
+            
             Client_OnLog(sender, new OnLogArgs
             {
                 BotUsername = BotName,
                 Data = $"Bot connected to {ChannelName}.",
                 DateTime = DateTime.Now
             });
+            Client.Works = true;
         }
 
         public virtual void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
@@ -114,24 +118,34 @@ namespace TwitchBot
                 System.Threading.Thread.Sleep(1000);
 
             var lowerMessage = chatMessage.Message.ToLower();
-            Commands.ForEach(_ => _.Command?.Invoke(chatMessage, lowerMessage, ChannelName));
+            Commands.ForEach(_ =>
+            {
+                if (PermissionIsAvailable(_.CommandPermission, chatMessage))
+                    _.Command?.Invoke(chatMessage, lowerMessage, ChannelName);
+            });
+        }
+
+        private bool PermissionIsAvailable(CommandPermission commandPermission, ChatMessage chatMessage)
+        {
+            return (chatMessage.IsSubscriber || !commandPermission.HasFlag(CommandPermission.Sub))
+                || (chatMessage.Badges.Any(_ => _.Key == "vip") || !commandPermission.HasFlag(CommandPermission.Self))
+                || (chatMessage.IsModerator || !commandPermission.HasFlag(CommandPermission.Moder))
+                || ((chatMessage.IsMe || chatMessage.Username == BotName.ToLower()) || !commandPermission.HasFlag(CommandPermission.Self))
+                || (chatMessage.IsBroadcaster || !commandPermission.HasFlag(CommandPermission.Broadcaster));
         }
 
         public virtual void InitializeCommands()
         {
-            List<string> dance = new List<string> { "!dance" };
-            Commands.Add(new CommandModel
-            {
-                Names =  dance,
-                Description = "Dance, bot, dance. More than ever did not dance.",
-                Command = (chatMessage, lowerMessage, channel) =>
+            List<string> smiles = new List<string> { "!smiles" };
+            Commands.Add(new CommandModel(nameof(smiles), smiles, "Dance, bot, dance. More than ever did not dance.", CommandPermission.All,
+                command: (chatMessage, lowerMessage, channel) =>
                 {
-                    StandartCheckingMessage(dance, lowerMessage, () =>
+                    if (smiles.Contains(lowerMessage))
                     {
                         List<string> danceSmiles = new List<string>
-                            { "annkraDisco", "karterDaance", "mcaT", "karterHype" };
+                            { "karterDaance", "annkraDisco", "karterHype", "mcaT" };
                         StringBuilder builder = new StringBuilder();
-                        int count = new Random().Next(20, 30);
+                        int count = new Random().Next(30, 40);
                         for (int i = 0; i < count; i++)
                         {
                             builder.Append($"{danceSmiles[i % danceSmiles.Count]} ");
@@ -139,34 +153,49 @@ namespace TwitchBot
                         if (Client.Client.JoinedChannels.Count == 0)
                             Client.Client.JoinChannel(ChannelName);
                         Client.Client.SendMessage(channel, builder.ToString());
-                    });
-                }
-            });
+                    }
+                    else
+                        foreach (var elem in smiles)
+                        {
+                            if (lowerMessage.StartsWith($"{elem} "))
+                            {
+                                var danceSmiles = chatMessage.Message.Remove(0, elem.Length + 1).Split(' ');
+                                StringBuilder builder = new StringBuilder();
+                                int count = new Random().Next(30, 40);
+                                for (int i = 0; i < count; i++)
+                                {
+                                    builder.Append($"{danceSmiles[i % danceSmiles.Length]} ");
+                                }
+                                if (Client.Client.JoinedChannels.Count == 0)
+                                    Client.Client.JoinChannel(ChannelName);
+                                Client.Client.SendMessage(channel, builder.ToString());
+                            }
+                        }
+                }));
 
             List<string> help = new List<string> { "!help" };
-            Commands.Add(new CommandModel
-            {
-                Names = help,
-                Description = "Returns all bot commands for this channel.",
-                Command = (chatMessage, lowerMessage, channel) =>
+            Commands.Add(new CommandModel(nameof(help), help, "Returns all bot commands for this channel.", CommandPermission.All,
+                command: (chatMessage, lowerMessage, channel) =>
                 {
                     StandartCheckingMessage(help, lowerMessage, () =>
                     {
-                        StringBuilder builder = new StringBuilder("Available commands: PurpleStar ");
+                        StringBuilder builder = new StringBuilder($"{chatMessage.Username}, Available commands for you: PurpleStar ");
                         foreach (var command in Commands)
                         {
-                            int count = command.Names.Count;
-                            builder.Append(command.Names[0]);
-                            for (int i = 1; i < count; i++)
-                                builder.Append($", {command.Names[i]}");
-                            builder.Append($" - {command.Description} PurpleStar ");
+                            if (PermissionIsAvailable(command.CommandPermission, chatMessage))
+                            {
+                                int count = command.Words.Count;
+                                builder.Append(command.Words[0]);
+                                for (int i = 1; i < count; i++)
+                                    builder.Append($", {command.Words[i]}");
+                                builder.Append($" - {command.Description} PurpleStar ");
+                            }
                         }
                         if (Client.Client.JoinedChannels.Count == 0)
                             Client.Client.JoinChannel(ChannelName);
                         Client.Client.SendMessage(channel, builder.ToString());
                     });
-                }
-            });
+                }));
         }
 
         protected void StandartCheckingMessage(List<string> names, string lowerMessage, Action f)
@@ -183,6 +212,7 @@ namespace TwitchBot
             {
                 if (Client.Client.JoinedChannels.Count == 0)
                     Client.Client.JoinChannel(ChannelName);
+                Client.Works = false;
                 Client.Client.Disconnect();
             }
         }

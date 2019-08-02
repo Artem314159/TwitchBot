@@ -10,18 +10,15 @@ namespace TwitchBot.Services
 {
     public class RussianClientService : DefaultClientService
     {
-        public RussianClientService(string botName, string botToken, string channelName) : base(botName, botToken, channelName)
+        public RussianClientService(Data.BotContext db, string botName, string botToken, string channelName) : base(db, botName, botToken, channelName)
         {
         }
 
         public override void InitializeCommands()
         {
-            List<string> ass = new List<string> { "!жопа", "!ass" };
-            Commands.Add(new CommandModel
-            {
-                Names = ass,
-                Description = "Проверь, насколько ты отъел свою жопу Kappa .",
-                Command = (chatMessage, lowerMessage, channel) =>
+            List<string> ass = new List<string> { "!попа", "!жопа", "!ass" };
+            Commands.Add(new CommandModel(nameof(ass), ass, "Проверь, насколько ты отъел свою жопу Kappa .", CommandPermission.All,
+                command: (chatMessage, lowerMessage, channel) =>
                 {
                     var levels = new List<string> {
                         "NotLikeThis а где, собственно, сама жопа? Что мне щупать? :|",
@@ -38,6 +35,8 @@ namespace TwitchBot.Services
                         System.Threading.Thread.Sleep(500);
 
                         string res = levels[new Random().Next(levels.Count)];
+                        if (chatMessage.Username.ToLower() == "excitedtwin")
+                            res = "Уууу, ну и жирная у тебя жопа, Кира, опять после 6 ела, да? PixelBob ХАРЕ ЖРАТЬ, иди кусты рисуй Keepo";
                         Client.Client.SendMessage(channel, $"{chatMessage.Username}, {res}");
                     }
                     else
@@ -52,12 +51,13 @@ namespace TwitchBot.Services
 
                                 string res = levels[new Random().Next(levels.Count)];
                                 var target = chatMessage.Message.Remove(0, elem.Length + 1);
+                                if (target.ToLower().Contains("excitedtwin"))
+                                    res = "Уууу, ну и жирная у тебя жопа, Кира, опять после 6 ела, да? PixelBob ХАРЕ ЖРАТЬ, иди кусты рисуй Keepo";
                                 Client.Client.SendMessage(channel, $"{target}, {res}");
                                 break;
                             }
                         }
-                }
-            });
+                }));
 
             base.InitializeCommands();
         }

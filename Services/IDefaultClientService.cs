@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TwitchLib.Client.Events;
 
 namespace TwitchBot
@@ -11,6 +8,7 @@ namespace TwitchBot
     {
         event EventHandler<OnLogArgs> OnLog;
         string ChannelName { get; set; }
+        CustomClientModel Client { get; }
         List<Models.CommandModel> Commands { get; set; }
         void InitializeCommands();
         void Disconnect();

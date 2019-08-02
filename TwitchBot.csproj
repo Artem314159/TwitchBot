@@ -33,6 +33,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.DependencyInjection.Abstractions.2.0.0\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
     </Reference>
@@ -59,7 +65,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
       <Private>True</Private>
@@ -150,24 +159,62 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChatBot.cs" />
+    <Compile Include="Forms\CrocodileForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CrocodileForm.Designer.cs">
+      <DependentUpon>CrocodileForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Services\ChatBot.cs" />
+    <Compile Include="Data\Base.cs" />
+    <Compile Include="Data\BotCredential.cs" />
+    <Compile Include="Data\Channel.cs" />
+    <Compile Include="Data\Context.cs" />
+    <Compile Include="Data\Friend.cs" />
+    <Compile Include="Data\HiFriendHistory.cs" />
+    <Compile Include="Migrations\201907311439314_AddedFriend.cs" />
+    <Compile Include="Migrations\201907311439314_AddedFriend.Designer.cs">
+      <DependentUpon>201907311439314_AddedFriend.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201908011013014_CreatedHiHistory.cs" />
+    <Compile Include="Migrations\201908011013014_CreatedHiHistory.Designer.cs">
+      <DependentUpon>201908011013014_CreatedHiHistory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201908011356274_CreatedCredentials.cs" />
+    <Compile Include="Migrations\201908011356274_CreatedCredentials.Designer.cs">
+      <DependentUpon>201908011356274_CreatedCredentials.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ChannelModel.cs" />
     <Compile Include="Models\CommandModel.cs" />
     <Compile Include="Models\CustomClientModel.cs" />
     <Compile Include="Services\DefaultClientService.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Forms\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Services\IDefaultClientService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\RussianClientService.cs" />
     <Compile Include="Services\Spac3crafterClientService.cs" />
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Services\Vika_KarterClientService.cs" />
+    <EmbeddedResource Include="Forms\CrocodileForm.resx">
+      <DependentUpon>CrocodileForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201907311439314_AddedFriend.resx">
+      <DependentUpon>201907311439314_AddedFriend.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201908011013014_CreatedHiHistory.resx">
+      <DependentUpon>201908011013014_CreatedHiHistory.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201908011356274_CreatedCredentials.resx">
+      <DependentUpon>201908011356274_CreatedCredentials.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -191,9 +238,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="TwitchInfo.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
